@@ -1,0 +1,23 @@
+.App {
+  text-align: center;
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  padding: 0.5em;
+  margin: 0.5em 0;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+}
