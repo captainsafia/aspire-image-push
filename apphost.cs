@@ -1,8 +1,8 @@
-﻿#:package Aspire.Hosting.Docker@13.1.0-preview.1.25601.5
-#:package Aspire.Hosting.Redis@13.1.0-preview.1.25601.5
-#:package Aspire.Hosting.Python@13.1.0-preview.1.25601.5
-#:package Aspire.Hosting.JavaScript@13.1.0-preview.1.25601.5
-#:sdk Aspire.AppHost.Sdk@13.1.0-preview.1.25601.5
+﻿#:package Aspire.Hosting.Docker@13.1.0-preview.1.25602.2
+#:package Aspire.Hosting.Redis@13.1.0-preview.1.25602.2
+#:package Aspire.Hosting.Python@13.1.0-preview.1.25602.2
+#:package Aspire.Hosting.JavaScript@13.1.0-preview.1.25602.2
+#:sdk Aspire.AppHost.Sdk@13.1.0-preview.1.25602.2
 #:project ./api
 
 #pragma warning disable ASPIRECOMPUTE001
@@ -25,13 +25,13 @@ var registry = builder.AddResource(new ParameterizedContainerRegistry("param-con
 
 builder.Pipeline.AddStep("push-images", async (context) =>
 {
-    var imageBuilder = context.Services.GetRequiredService<IResourceContainerImageBuilder>();
+    var imageManager = context.Services.GetRequiredService<IResourceContainerImageManager>();
     foreach (var computeResource in context.Model.GetComputeResources())
     {
         if (computeResource.RequiresImageBuild())
         {
             context.Logger.LogInformation("Pushing image for compute resource: {resourceName}", computeResource.Name);
-            await imageBuilder.PushImageAsync(computeResource, context.CancellationToken);
+            await imageManager.PushImageAsync(computeResource, context.CancellationToken);
         }
     }
 }, dependsOn: WellKnownPipelineSteps.Build);
