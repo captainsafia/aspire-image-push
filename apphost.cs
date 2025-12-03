@@ -1,12 +1,12 @@
-﻿#:package Aspire.Hosting.Docker@13.1.0-preview.1.25602.2
-#:package Aspire.Hosting.Redis@13.1.0-preview.1.25602.2
-#:package Aspire.Hosting.Python@13.1.0-preview.1.25602.2
-#:package Aspire.Hosting.JavaScript@13.1.0-preview.1.25602.2
-#:sdk Aspire.AppHost.Sdk@13.1.0-preview.1.25602.2
+﻿#:package Aspire.Hosting.Docker@13.1.0-preview.1.25602.7
+#:package Aspire.Hosting.Redis@13.1.0-preview.1.25602.7
+#:package Aspire.Hosting.Python@13.1.0-preview.1.25602.7
+#:package Aspire.Hosting.JavaScript@13.1.0-preview.1.25602.7
+#:sdk Aspire.AppHost.Sdk@13.1.0-preview.1.25602.7
 #:project ./api
 
 #pragma warning disable ASPIRECOMPUTE001
-#pragma warning disable ASPIRECOMPUTE002
+#pragma warning disable ASPIRECOMPUTE003
 #pragma warning disable ASPIREPIPELINES001
 #pragma warning disable ASPIREPIPELINES003
 
@@ -17,11 +17,9 @@ using Microsoft.Extensions.Logging;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-builder.AddDockerComposeEnvironment("compose");
-
-var endpointParameter = builder.AddParameter("containerRegistryEndpoint");
-var repositoryParameter = builder.AddParameter("containerRegistryRepository");
-var registry = builder.AddResource(new ParameterizedContainerRegistry("param-container-registry", endpointParameter.Resource, repositoryParameter.Resource));
+var endpoint = builder.AddParameter("containerRegistryEndpoint");
+var repository = builder.AddParameter("containerRegistryRepository");
+var registry = builder.AddContainerRegistry("container-registry", endpoint, repository);
 
 builder.Pipeline.AddStep("push-images", async (context) =>
 {
@@ -47,11 +45,11 @@ builder.AddDockerfile("go-app", "./goapp")
     {
         ctx.LocalImageName = $"{userName}-go-app";
     })
-    .WithAnnotation(new ContainerRegistryReferenceAnnotation(registry.Resource));
+    .WithContainerRegistry(registry);
 
 // .NET project, .NET SDK owns build and tag, Aspire owns push
 builder.AddProject<Projects.api>("api")
-    .WithAnnotation(new ContainerRegistryReferenceAnnotation(registry.Resource));
+    .WithContainerRegistry(registry);
 
 // Python app serving as host for front-end, built and tagged separately, only Python image is pushed
 // Front-end image produces assets needed by backend image
@@ -62,7 +60,7 @@ var pythonApp = builder.AddUvicornApp("pythonapp", "./pythonapp", "main:app")
     {
         ctx.LocalImageName = $"{userName}-pythonapp";
     })
-    .WithAnnotation(new ContainerRegistryReferenceAnnotation(registry.Resource));
+    .WithContainerRegistry(registry);
 
 pythonApp.PublishWithContainerFiles(viteApp, "./static");
 
@@ -73,23 +71,12 @@ builder.AddUvicornApp("pythonapp-standalone", "./pythonapp-standalone", "main:ap
     {
         ctx.LocalImageName = $"{userName}-pythonapp-standalone";
     })
-    .WithAnnotation(new ContainerRegistryReferenceAnnotation(registry.Resource));
+    .WithContainerRegistry(registry);
 builder.AddViteApp("viteapp-standalone", "./viteapp-standalone")
     .WithContainerBuildOptions(ctx =>
     {
         ctx.LocalImageName = $"{userName}-viteapp-standalone";
     })
-    .WithAnnotation(new ContainerRegistryReferenceAnnotation(registry.Resource));
+    .WithContainerRegistry(registry);
 
 builder.Build().Run();
-
-class ParameterizedContainerRegistry(string name, ParameterResource endpointParameter, ParameterResource repositoryParameter) : Resource(name), IContainerRegistry
-{
-    ReferenceExpression IContainerRegistry.Name => ReferenceExpression.Create($"{Name}");
-
-    ReferenceExpression IContainerRegistry.Endpoint => ReferenceExpression.Create($"{endpointParameter}");
-
-    // For DockerHub, "captainsafia"
-    // For GHCR, "captainsafia/my-repo"
-    ReferenceExpression? IContainerRegistry.Repository => ReferenceExpression.Create($"{repositoryParameter}");
-}
