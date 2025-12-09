@@ -48,6 +48,6 @@ jobs:
 
     - name: Push images with Aspire
       env:
-        Parameters__containerRegistryEndpoint: ghcr.io
-        Parameters__containerRegistryRepository: ${{ github.repository }}
-      run: aspire do push-images
+        Parameters__registry_endpoint: ghcr.io
+        Parameters__registry_repository: ${{ github.repository }}
+      run: aspire do push

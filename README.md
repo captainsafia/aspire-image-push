@@ -15,9 +15,8 @@ The AppHost (`apphost.cs`) defines a distributed application with multiple servi
 
 ## Features
 
-- **Parameterized Container Registry** - Registry endpoint and repository are configurable via parameters
-- **Custom Pipeline Step** - A `push-images` pipeline step that builds and pushes all compute resources
-- **Custom Local Image Names** - Images are tagged with the current user's name for local development
+- **Container Registry Resource** - Registry endpoint and repository are configurable via parameters using `AddContainerRegistry()`
+- **Built-in Push Pipeline Step** - A `push` pipeline step that builds and pushes all compute resources
 - **Multi-language Support** - Demonstrates Go, .NET, Python, and Node.js/Vite applications
 
 ## Prerequisites
@@ -39,21 +38,21 @@ aspire run
 
 ### Build and push images locally
 
-Set the required parameters and run the push-images pipeline step:
+Set the required parameters and run the push pipeline step:
 
 ```bash
 # Optional: Set parameters as environment variables
-export Parameters__containerRegistryEndpoint=ghcr.io
-export Parameters__containerRegistryRepository=your-username/your-repo
+export Parameters__registry_endpoint=ghcr.io
+export Parameters__registry_repository=your-username/your-repo
 
-# Run the push-images pipeline step
-aspire do push-images
+# Run the push pipeline step
+aspire do push
 ```
 
 For debug output:
 
 ```bash
-aspire do push-images --log-level debug
+aspire do push --log-level debug
 ```
 
 ## Configuration
@@ -63,17 +62,17 @@ aspire do push-images --log-level debug
 The application requires two parameters for container registry configuration:
 
 | Parameter | Description | Example |
-|-----------|-------------|---------|
-| `containerRegistryEndpoint` | The container registry host | `ghcr.io`, `docker.io`, `myregistry.azurecr.io` |
-| `containerRegistryRepository` | The repository path within the registry | `captainsafia/my-repo` (for GHCR), `captainsafia` (for Docker Hub) |
+|-----------|-------------|----------|
+| `registry-endpoint` | The container registry host | `ghcr.io`, `docker.io`, `myregistry.azurecr.io` |
+| `registry-repository` | The repository path within the registry | `captainsafia/my-repo` (for GHCR), `captainsafia` (for Docker Hub) |
 
 ### Setting Parameters
 
-Parameters can be set via environment variables using the `Parameters__` prefix:
+Parameters can be set via environment variables using the `Parameters__` prefix (note: hyphens in parameter names become underscores):
 
 ```bash
-export Parameters__containerRegistryEndpoint=ghcr.io
-export Parameters__containerRegistryRepository=owner/repo
+export Parameters__registry_endpoint=ghcr.io
+export Parameters__registry_repository=owner/repo
 ```
 
 ## CI/CD
@@ -82,9 +81,9 @@ A GitHub Actions workflow is included at `.github/workflows/push-images.yml` tha
 
 1. Checks out the code
 2. Sets up .NET using the `global.json` configuration
-3. Installs the Aspire CLI
+3. Installs the Aspire CLI from the dev feed
 4. Logs into GitHub Container Registry (GHCR)
-5. Pushes all container images to GHCR
+5. Runs `aspire do push` to build and push all container images to GHCR
 
 The workflow runs on:
 
